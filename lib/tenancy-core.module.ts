@@ -1,7 +1,9 @@
 import {
   BadRequestException,
   DynamicModule,
+  ExecutionContext,
   Global,
+  Inject,
   Module,
   OnApplicationShutdown,
   Provider,
@@ -26,11 +28,19 @@ import {
   TENANT_MODULE_OPTIONS,
 } from './tenancy.constants';
 import { ConnectionMap, ModelDefinitionMap } from './types';
+import { CONTEXT } from '@nestjs/graphql';
 
 @Global()
 @Module({})
 export class TenancyCoreModule implements OnApplicationShutdown {
-  constructor(private readonly moduleRef: ModuleRef) {}
+  static ctx: ExecutionContext;
+
+  constructor(
+    private readonly moduleRef: ModuleRef,
+    @Inject(CONTEXT) private readonly context: ExecutionContext,
+  ) {
+    TenancyCoreModule.ctx = this.context;
+  }
 
   /**
    * Register for synchornous modules
@@ -58,6 +68,9 @@ export class TenancyCoreModule implements OnApplicationShutdown {
 
     /* Http Adaptor */
     const httpAdapterHost = this.createHttpAdapterProvider();
+
+    /* Execution context host */
+    // const executionContextHost = this.createExecutionContextHostProvider();
 
     /* Tenant Connection */
     const tenantConnectionProvider = {
@@ -90,6 +103,7 @@ export class TenancyCoreModule implements OnApplicationShutdown {
       modelDefinitionMapProvider,
       tenantConnectionProvider,
       httpAdapterHost,
+      // executionContextHost,
     ];
 
     return {
@@ -119,6 +133,9 @@ export class TenancyCoreModule implements OnApplicationShutdown {
 
     /* Http Adaptor */
     const httpAdapterHost = this.createHttpAdapterProvider();
+
+    /* Execution context host */
+    // const executionContextHost = this.createExecutionContextHostProvider();
 
     /* Tenant Connection */
     const tenantConnectionProvider = {
@@ -154,6 +171,7 @@ export class TenancyCoreModule implements OnApplicationShutdown {
       modelDefinitionMapProvider,
       tenantConnectionProvider,
       httpAdapterHost,
+      // executionContextHost,
     ];
 
     return {
@@ -195,6 +213,8 @@ export class TenancyCoreModule implements OnApplicationShutdown {
     moduleOptions: TenancyModuleOptions,
     adapterHost: HttpAdapterHost,
   ): string {
+    console.log('execution context: ', TenancyCoreModule.ctx);
+
     // Check if the adaptor is fastify
     const isFastifyAdaptor = this.adapterIsFastify(adapterHost);
 
@@ -499,6 +519,22 @@ export class TenancyCoreModule implements OnApplicationShutdown {
       inject: [HttpAdapterHost],
     };
   }
+
+  /**
+   * Create Execution context provider
+   *
+   * @private
+   * @static
+   * @returns {Provider}
+   * @memberof TenancyCoreModule
+   */
+  // private static createExecutionContextHostProvider(): Provider {
+  //   return {
+  //     provide: DEFAULT_EXECUTION_CONTEXT_HOST,
+  //     useFactory: (executionContext: ExecutionContextHost) => executionContext,
+  //     inject: [ExecutionContextHost],
+  //   };
+  // }
 
   /**
    * Check if the object is empty or not
